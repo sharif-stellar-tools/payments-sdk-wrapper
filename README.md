@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>OpenPayments-SDK</h1>
+  <h1>payments-sdk-wrapper</h1>
   <p><strong>Seamless cross-border payment protocol integration using Stellar.</strong></p>
 </div>
 
@@ -7,7 +7,7 @@
 
 ## 📖 Overview
 
-OpenPayments-SDK is a critical component of our decentralized ecosystem. This repository contains the source code, tests, and deployment configurations necessary to run the service. Built with modern, enterprise-grade architecture, it ensures high availability, secure execution, and seamless integration with the broader network.
+payments-sdk-wrapper is a critical component of our decentralized ecosystem. This repository contains the source code, tests, and deployment configurations necessary to run the service. Built with modern, enterprise-grade architecture, it ensures high availability, secure execution, and seamless integration with the broader network.
 
 ## ✨ Key Features
 
@@ -26,8 +26,8 @@ OpenPayments-SDK is a critical component of our decentralized ecosystem. This re
 
 \\\ash
 # Clone the repository
-git clone https://github.com/YourOrganization/OpenPayments-SDK.git
-cd OpenPayments-SDK
+git clone https://github.com/YourOrganization/payments-sdk-wrapper.git
+cd payments-sdk-wrapper
 
 # Install dependencies and build
 # (Refer to package.json or Cargo.toml for specific build commands)
