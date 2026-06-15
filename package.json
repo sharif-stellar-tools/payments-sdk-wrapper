@@ -1,5 +1,5 @@
 {
-  "name": "sharif-stellar-tools/payments-sdk-wrapper",
+  "name": "payments-sdk-wrapper",
   "version": "1.0.0",
   "description": "Professional SDK for the Stellar Ecosystem",
   "main": "dist/index.js",
