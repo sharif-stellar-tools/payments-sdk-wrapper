@@ -1,4 +1,4 @@
-import { Horizon } from '@stellar/stellar-sdk';
+import { Horizon, Networks } from '@stellar/stellar-sdk';
 import { PaymentsResource } from './resources/payments';
 
 export class OpenPaymentsClient {
@@ -9,6 +9,7 @@ export class OpenPaymentsClient {
     _apiKey: string,
     public baseUrl: string,
     public senderSecretKey?: string,
+    public networkPassphrase: string = Networks.TESTNET,
   ) {
     this.server = new Horizon.Server(baseUrl);
     this.payments = new PaymentsResource(this);
