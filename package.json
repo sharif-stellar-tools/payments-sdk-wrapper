@@ -14,9 +14,11 @@
   "dependencies": {
     "@stellar/stellar-sdk": "^15.1.0",
     "axios": "^1.6.0",
+    "dotenv": "^17.4.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/dotenv": "^6.1.1",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "eslint": "^8.40.0",

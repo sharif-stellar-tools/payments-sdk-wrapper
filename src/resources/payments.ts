@@ -10,9 +10,7 @@ import { PluginRegistry } from '../plugins/registry';
 import { PaymentRequest, PaymentResponse, BatchPaymentResponse } from '../types';
 import { validatePaymentRequest } from '../validation';
 
-const BASE_FEE = '100';
-const TX_TIMEOUT_SECONDS = 30;
-const MAX_OPERATIONS = 100;
+import { config } from '../config';
 
 export class PaymentsResource {
   constructor(
@@ -47,7 +45,7 @@ export class PaymentsResource {
         : new Asset(payload.currency, sourcePublicKey);
 
     const transaction = new TransactionBuilder(account, {
-      fee: BASE_FEE,
+      fee: config.baseFee,
       networkPassphrase: this.client.networkPassphrase,
     })
       .addOperation(
@@ -57,7 +55,7 @@ export class PaymentsResource {
           amount: payload.amount.toString(),
         }),
       )
-      .setTimeout(TX_TIMEOUT_SECONDS)
+      .setTimeout(config.txTimeoutSeconds)
       .build();
 
     transaction.sign(senderKeypair);
@@ -85,9 +83,9 @@ export class PaymentsResource {
   }
 
   async submitBatchedPayments(paymentsArray: PaymentRequest[]): Promise<BatchPaymentResponse> {
-    if (paymentsArray.length > MAX_OPERATIONS) {
+    if (paymentsArray.length > config.maxOperations) {
       throw new Error(
-        `Batch size of ${paymentsArray.length} exceeds Stellar's limit of ${MAX_OPERATIONS} operations per transaction.`,
+        `Batch size of ${paymentsArray.length} exceeds Stellar's limit of ${config.maxOperations} operations per transaction.`,
       );
     }
 
@@ -126,7 +124,7 @@ export class PaymentsResource {
     const sourceAccount = await this.client.server.loadAccount(sourceKeypair.publicKey());
 
     let builder = new TransactionBuilder(sourceAccount, {
-      fee: BASE_FEE,
+      fee: config.baseFee,
       networkPassphrase: this.client.networkPassphrase,
     });
 
@@ -145,7 +143,7 @@ export class PaymentsResource {
       );
     }
 
-    const tx = builder.setTimeout(TX_TIMEOUT_SECONDS).build();
+    const tx = builder.setTimeout(config.txTimeoutSeconds).build();
     tx.sign(sourceKeypair);
 
     let result: { hash: string };
