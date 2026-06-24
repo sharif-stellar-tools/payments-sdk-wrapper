@@ -1,6 +1,6 @@
 // Integration test suite for payments-sdk-wrapper
 
-import { Account, Keypair } from '@stellar/stellar-sdk';
+import { Account, Keypair, rpc } from '@stellar/stellar-sdk';
 import { OpenPaymentsClient } from '../../src/client';
 import { CoreEngine } from '../../src/core/engine';
 import { ValidationError } from '../../src/errors';
@@ -11,6 +11,17 @@ const DESTINATION_KEYPAIR = Keypair.random();
 describe('Core Flow', () => {
   it('should process transactions', async () => {
     const engine = new CoreEngine();
+    
+    // Mock RPC getTransaction response
+    jest.spyOn((engine as any).rpcServer, 'getTransaction').mockResolvedValue({
+      status: 'SUCCESS',
+      hash: 'tx_001',
+      latestLedger: 100,
+      latestLedgerCloseTime: 1000,
+      oldestLedger: 1,
+      oldestLedgerCloseTime: 0,
+    } as any);
+
     const result = await engine.processTx('tx_001');
     expect(result).toBe(true);
   });
