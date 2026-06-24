@@ -20,6 +20,24 @@ describe('Core Flow', () => {
     expect(client.payments).toBeDefined();
   });
 
+  it('should use environment variables for default configuration', () => {
+    // Save current env
+    const originalUrl = process.env.HORIZON_URL;
+    process.env.HORIZON_URL = 'https://custom-horizon.example.com';
+
+    try {
+      const client = new OpenPaymentsClient();
+      expect(client.baseUrl).toBe('https://custom-horizon.example.com');
+    } finally {
+      // Restore env
+      if (originalUrl) {
+        process.env.HORIZON_URL = originalUrl;
+      } else {
+        delete process.env.HORIZON_URL;
+      }
+    }
+  });
+
   it('should create a payment and return a response', async () => {
     const client = new OpenPaymentsClient(
       'test-api-key',

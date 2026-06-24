@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Horizon } from '@stellar/stellar-sdk';
+import { config as sdkConfig } from '../config';
 
 export interface WebhookListenerConfig {
   [accountId: string]: string;
@@ -27,7 +28,10 @@ export class WebhookListener {
   private cleanupFns: Array<() => void> = [];
   private running = false;
 
-  constructor(horizonUrl: string, config: WebhookListenerConfig) {
+  constructor(
+    horizonUrl: string = sdkConfig.horizonUrl,
+    config: WebhookListenerConfig,
+  ) {
     this.server = new Horizon.Server(horizonUrl);
     this.config = config;
   }

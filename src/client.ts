@@ -1,19 +1,20 @@
-import { Horizon, Networks } from '@stellar/stellar-sdk';
+import { Horizon } from '@stellar/stellar-sdk';
 import { PluginRegistry } from './plugins/registry';
 import { PaymentPlugin } from './plugins/types';
 import { PaymentsResource } from './resources/payments';
+import { config } from './config';
 
 export interface OpenPaymentsClientOptions {
   /**
    * The Horizon server base URL.
    * e.g. 'https://horizon-testnet.stellar.org'
    */
-  baseUrl: string;
+  baseUrl?: string;
   /** Optional: the sender's Stellar secret key (can also be passed per-request). */
   senderSecretKey?: string;
   /**
    * The Stellar network passphrase.
-   * Defaults to `Networks.TESTNET`.
+   * Defaults to `config.networkPassphrase`.
    */
   networkPassphrase?: string;
   /**
@@ -29,10 +30,10 @@ export class OpenPaymentsClient {
   public readonly pluginRegistry: PluginRegistry;
 
   constructor(
-    _apiKey: string,
-    public baseUrl: string,
-    public senderSecretKey?: string,
-    public networkPassphrase: string = Networks.TESTNET,
+    _apiKey?: string,
+    public baseUrl: string = config.horizonUrl,
+    public senderSecretKey: string | undefined = config.senderSecretKey,
+    public networkPassphrase: string = config.networkPassphrase,
     plugins: PaymentPlugin[] = [],
   ) {
     this.server = new Horizon.Server(baseUrl);
