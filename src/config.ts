@@ -23,4 +23,7 @@ export const config = {
   get maxOperations() {
     return parseInt(process.env.MAX_OPERATIONS || '100', 10);
   },
+  get rpcUrl() {
+    return process.env.RPC_URL || 'https://soroban-testnet.stellar.org';
+  },
 };
