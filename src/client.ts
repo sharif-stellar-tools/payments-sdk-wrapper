@@ -2,6 +2,7 @@ import { Horizon } from '@stellar/stellar-sdk';
 import { PluginRegistry } from './plugins/registry';
 import { PaymentPlugin } from './plugins/types';
 import { PaymentsResource } from './resources/payments';
+import { SubscriptionManager } from './resources/subscription-manager';
 import { config } from './config';
 
 export interface OpenPaymentsClientOptions {
@@ -26,6 +27,7 @@ export interface OpenPaymentsClientOptions {
 
 export class OpenPaymentsClient {
   public payments: PaymentsResource;
+  public subscriptions: SubscriptionManager;
   public server: Horizon.Server;
   public readonly pluginRegistry: PluginRegistry;
 
@@ -44,6 +46,7 @@ export class OpenPaymentsClient {
     }
 
     this.payments = new PaymentsResource(this, this.pluginRegistry);
+    this.subscriptions = new SubscriptionManager(this, this.pluginRegistry);
   }
 
   /**
