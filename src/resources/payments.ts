@@ -42,19 +42,43 @@ export class PaymentsResource {
     const asset =
       payload.currency === 'XLM'
         ? Asset.native()
-        : new Asset(payload.currency, sourcePublicKey);
+        : new Asset(payload.currency, payload.issuer ?? sourcePublicKey);
+
+    let operation: Operation;
+
+    if (payload.strictSend) {
+      // PathPaymentStrictSend: specify exact destination amount
+      operation = Operation.pathPaymentStrictSend({
+        sendAsset: asset,
+        sendAmount: payload.amount.toString(),
+        destination: payload.destination,
+        destAsset: Asset.native(),
+        destMin: payload.amount.toString(),
+      }) as unknown as Operation;
+    } else if (payload.strictReceive) {
+      // PathPaymentStrictReceive: specify exact source amount
+      operation = Operation.pathPaymentStrictReceive({
+        sendAsset: asset,
+        sendAmount: payload.amount.toString(),
+        destination: payload.destination,
+        destAsset: Asset.native(),
+        destMin: payload.amount.toString(),
+        sendMax: (payload.amount * 1.1).toString(),
+      }) as unknown as Operation;
+    } else {
+      // Standard payment
+      operation = Operation.payment({
+        destination: payload.destination,
+        asset,
+        amount: payload.amount.toString(),
+      });
+    }
 
     const transaction = new TransactionBuilder(account, {
       fee: config.baseFee,
       networkPassphrase: this.client.networkPassphrase,
     })
-      .addOperation(
-        Operation.payment({
-          destination: payload.destination,
-          asset,
-          amount: payload.amount.toString(),
-        }),
-      )
+      .addOperation(operation)
       .setTimeout(config.txTimeoutSeconds)
       .build();
 

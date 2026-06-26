@@ -21,7 +21,13 @@ const PaymentRequestSchema = z.object({
       { message: 'destination must be a valid Stellar Ed25519 public key' },
     ),
   senderSecretKey: z.string().optional(),
-});
+  issuer: z.string().optional(),
+  strictSend: z.boolean().optional(),
+  strictReceive: z.boolean().optional(),
+}).refine(
+  (data) => !(data.strictSend && data.strictReceive),
+  { message: 'strictSend and strictReceive cannot both be true' },
+);
 
 export function validatePaymentRequest(payload: unknown): void {
   const result = PaymentRequestSchema.safeParse(payload);
