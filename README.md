@@ -24,14 +24,61 @@ payments-sdk-wrapper is a critical component of our decentralized ecosystem. Thi
 
 ### Local Installation
 
-\\\ash
+```bash
 # Clone the repository
 git clone https://github.com/YourOrganization/payments-sdk-wrapper.git
 cd payments-sdk-wrapper
 
 # Install dependencies and build
 # (Refer to package.json or Cargo.toml for specific build commands)
-\\\
+```
+
+## ⚠️ Error Handling
+
+Every error this SDK throws extends `PaymentSDKError`, so you can catch that single
+type to handle all SDK failures generically, or catch a specific subclass to react
+to one failure mode. The original error (raw Stellar SDK error, Axios error, etc.)
+is always preserved on `error.cause` for debugging/logging.
+
+| Class                    | Thrown when                                                              |
+| ------------------------ | ------------------------------------------------------------------------- |
+| `ValidationError`        | A request fails local/schema validation before it's sent to the network (bad amount, malformed address, missing key, etc). |
+| `NetworkError`           | The SDK couldn't get a usable response from Horizon/RPC at all (timeout, connection refused, 5xx, rate limiting). |
+| `AccountNotFoundError`   | The requested Stellar account does not exist on the network.            |
+| `TransactionFailedError` | Horizon accepted the request but rejected the transaction. Carries `resultCodes` with Horizon's parsed failure reason. |
+| `InsufficientFundsError` | A `TransactionFailedError` specifically caused by an underfunded source account. |
+
+```ts
+import {
+  AccountNotFoundError,
+  InsufficientFundsError,
+  NetworkError,
+  TransactionFailedError,
+  ValidationError,
+} from 'payments-sdk-wrapper';
+
+try {
+  await client.payments.create(paymentRequest);
+} catch (error) {
+  if (error instanceof InsufficientFundsError) {
+    // error.resultCodes has Horizon's raw failure codes
+    console.error('Not enough balance to complete this payment:', error.resultCodes);
+  } else if (error instanceof AccountNotFoundError) {
+    console.error('The sender or destination account does not exist on this network');
+  } else if (error instanceof TransactionFailedError) {
+    console.error('Transaction rejected by the network:', error.resultCodes);
+  } else if (error instanceof NetworkError) {
+    console.error('Could not reach the Stellar network, consider retrying:', error.message);
+  } else if (error instanceof ValidationError) {
+    console.error('Invalid payment request:', error.message);
+  } else {
+    throw error; // unexpected error, let it propagate
+  }
+
+  // The original error is always available for logging/debugging:
+  console.debug('Original cause:', error.cause);
+}
+```
 
 ## 🤝 Contributing
 We welcome contributions from the community! Please read our [Contributing Guidelines](./CONTRIBUTING.md) to get started. Before submitting a Pull Request, ensure that you have reviewed our [Code of Conduct](./CODE_OF_CONDUCT.md).

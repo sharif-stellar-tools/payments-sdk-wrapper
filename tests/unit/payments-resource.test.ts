@@ -1,7 +1,7 @@
-import { Account, Keypair } from '@stellar/stellar-sdk';
+import { Account, BadResponseError, Keypair, NotFoundError } from '@stellar/stellar-sdk';
 import { OpenPaymentsClient } from '../../src/client';
 import { PaymentsResource } from '../../src/resources/payments';
-import { ValidationError } from '../../src/errors';
+import { AccountNotFoundError, InsufficientFundsError, ValidationError } from '../../src/errors';
 import { validatePaymentRequest } from '../../src/validation';
 
 describe('PaymentsResource', () => {
@@ -83,5 +83,32 @@ describe('PaymentsResource', () => {
 
     expect(response).toEqual({ id: 'custom-asset-hash', status: 'completed', hash: 'custom-asset-hash' });
     expect(submitTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('maps a loadAccount 404 to AccountNotFoundError', async () => {
+    const loadAccount = jest.fn(async () => {
+      throw new NotFoundError('Resource Missing', { status: 404 });
+    });
+    const client = createMockClient({ loadAccount });
+    const payments = new PaymentsResource(client);
+
+    await expect(payments.create(VALID_PAYLOAD)).rejects.toBeInstanceOf(AccountNotFoundError);
+  });
+
+  it('maps a submitTransaction op_underfunded failure to InsufficientFundsError', async () => {
+    const submitTransaction = jest.fn(async () => {
+      throw new BadResponseError('Transaction Failed', {
+        status: 400,
+        data: {
+          extras: {
+            result_codes: { transaction: 'tx_failed', operations: ['op_underfunded'] },
+          },
+        },
+      });
+    });
+    const client = createMockClient({ submitTransaction });
+    const payments = new PaymentsResource(client);
+
+    await expect(payments.create(VALID_PAYLOAD)).rejects.toBeInstanceOf(InsufficientFundsError);
   });
 });

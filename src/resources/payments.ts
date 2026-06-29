@@ -5,7 +5,7 @@ import {
   TransactionBuilder,
 } from '@stellar/stellar-sdk';
 import { OpenPaymentsClient } from '../client';
-import { ValidationError } from '../errors';
+import { mapStellarError, ValidationError } from '../errors';
 import { PluginRegistry } from '../plugins/registry';
 import { PaymentRequest, PaymentResponse, BatchPaymentResponse } from '../types';
 import { validatePaymentRequest } from '../validation';
@@ -34,10 +34,15 @@ export class PaymentsResource {
       );
     }
 
-    const senderKeypair = Keypair.fromSecret(secretKey);
+    let senderKeypair;
+    let account;
+    try {
+      senderKeypair = Keypair.fromSecret(secretKey);
+      account = await this.client.server.loadAccount(senderKeypair.publicKey());
+    } catch (err) {
+      throw mapStellarError(err);
+    }
     const sourcePublicKey = senderKeypair.publicKey();
-
-    const account = await this.client.server.loadAccount(sourcePublicKey);
 
     const asset =
       payload.currency === 'XLM'
@@ -88,7 +93,7 @@ export class PaymentsResource {
     try {
       result = await this.client.server.submitTransaction(transaction);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
+      const error = mapStellarError(err);
       // ── onError ─────────────────────────────────────────────────────────────
       await this.plugins.runOnError({ ...context, error });
       throw error;
@@ -108,7 +113,7 @@ export class PaymentsResource {
 
   async submitBatchedPayments(paymentsArray: PaymentRequest[]): Promise<BatchPaymentResponse> {
     if (paymentsArray.length > config.maxOperations) {
-      throw new Error(
+      throw new ValidationError(
         `Batch size of ${paymentsArray.length} exceeds Stellar's limit of ${config.maxOperations} operations per transaction.`,
       );
     }
@@ -122,7 +127,7 @@ export class PaymentsResource {
 
     for (const payment of paymentsArray) {
       if (payment.currency !== 'XLM' && !payment.issuer) {
-        throw new Error(
+        throw new ValidationError(
           `Payment to "${payment.destination}" uses asset "${payment.currency}" but no issuer was provided. ` +
           `Set payment.issuer to the asset issuer's public key.`,
         );
@@ -144,8 +149,14 @@ export class PaymentsResource {
     // ── beforePayment ─────────────────────────────────────────────────────────
     await this.plugins.runBeforePayment(batchContext);
 
-    const sourceKeypair = Keypair.fromSecret(secretKey);
-    const sourceAccount = await this.client.server.loadAccount(sourceKeypair.publicKey());
+    let sourceKeypair;
+    let sourceAccount;
+    try {
+      sourceKeypair = Keypair.fromSecret(secretKey);
+      sourceAccount = await this.client.server.loadAccount(sourceKeypair.publicKey());
+    } catch (err) {
+      throw mapStellarError(err);
+    }
 
     let builder = new TransactionBuilder(sourceAccount, {
       fee: config.baseFee,
@@ -174,7 +185,7 @@ export class PaymentsResource {
     try {
       result = await this.client.server.submitTransaction(tx);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
+      const error = mapStellarError(err);
       // ── onError ─────────────────────────────────────────────────────────────
       await this.plugins.runOnError({ ...batchContext, error });
       throw error;

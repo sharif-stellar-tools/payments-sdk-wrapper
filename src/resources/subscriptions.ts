@@ -16,7 +16,7 @@ import {
   Memo,
 } from '@stellar/stellar-sdk';
 import { OpenPaymentsClient } from '../client';
-import { ValidationError } from '../errors';
+import { mapStellarError, ValidationError } from '../errors';
 import { config } from '../config';
 
 export interface SubscriptionRequest {
@@ -89,7 +89,12 @@ export class SubscriptionManager {
     if (req.intervalSeconds <= 0) throw new ValidationError('Interval must be positive');
     if (req.totalCharges <= 0) throw new ValidationError('Total charges must be positive');
 
-    const senderKeypair = Keypair.fromSecret(req.senderSecretKey);
+    let senderKeypair;
+    try {
+      senderKeypair = Keypair.fromSecret(req.senderSecretKey);
+    } catch (err) {
+      throw mapStellarError(err);
+    }
     const now = Math.floor(Date.now() / 1000);
     const validFrom = now;
     const validUntil = now + req.intervalSeconds * req.totalCharges;
@@ -146,10 +151,16 @@ export class SubscriptionManager {
       );
     }
 
-    const senderKeypair = Keypair.fromSecret(senderSecretKey);
+    let senderKeypair;
+    let account;
+    try {
+      senderKeypair = Keypair.fromSecret(senderSecretKey);
+      account = await this.client.server.loadAccount(senderKeypair.publicKey());
+    } catch (err) {
+      throw mapStellarError(err);
+    }
     const sourcePublicKey = senderKeypair.publicKey();
 
-    const account = await this.client.server.loadAccount(sourcePublicKey);
     const asset =
       auth.currency === 'XLM'
         ? Asset.native()
@@ -170,7 +181,12 @@ export class SubscriptionManager {
       .build();
 
     transaction.sign(senderKeypair);
-    const result = await this.client.server.submitTransaction(transaction);
+    let result: { hash: string };
+    try {
+      result = await this.client.server.submitTransaction(transaction);
+    } catch (err) {
+      throw mapStellarError(err);
+    }
 
     auth.executedCharges += 1;
     if (auth.executedCharges >= auth.totalCharges) {

@@ -4,7 +4,17 @@
 export { OpenPaymentsClient } from './client';
 export type { OpenPaymentsClientOptions } from './client';
 export { PaymentsResource } from './resources/payments';
-export { ValidationError } from './errors';
+export {
+  AccountNotFoundError,
+  ErrorCode,
+  InsufficientFundsError,
+  mapStellarError,
+  NetworkError,
+  PaymentSDKError,
+  TransactionFailedError,
+  ValidationError,
+} from './errors';
+export type { TransactionResultCodes } from './errors';
 export { WebhookListener } from './webhooks/webhook-listener';
 export { PluginRegistry } from './plugins/registry';
 export type { PaymentPlugin, PluginContext } from './plugins/types';

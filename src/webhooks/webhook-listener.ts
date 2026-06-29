@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Horizon } from '@stellar/stellar-sdk';
 import { config as sdkConfig } from '../config';
+import { mapStellarError } from '../errors';
 
 export interface WebhookListenerConfig {
   [accountId: string]: string;
@@ -126,10 +127,9 @@ export class WebhookListener {
         timeout: 10000,
       });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown error';
+      const mapped = mapStellarError(error);
       console.error(
-        `[WebhookListener] Failed to deliver webhook for account ${accountId}: ${message}`,
+        `[WebhookListener] Failed to deliver webhook for account ${accountId}: ${mapped.message}`,
       );
     }
   }
