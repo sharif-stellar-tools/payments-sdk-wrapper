@@ -1,5 +1,6 @@
 import { rpc } from '@stellar/stellar-sdk';
 import { config } from '../config';
+import { mapStellarError } from '../errors';
 
 /**
  * Core engine for processing Stellar/OpenPayments transactions.
@@ -27,7 +28,7 @@ export class CoreEngine {
       const status = await this.rpcServer.getTransaction(txId);
       return status.status === 'SUCCESS';
     } catch (error) {
-      console.error(`Error processing transaction ${txId}:`, error);
+      console.error(`Error processing transaction ${txId}:`, mapStellarError(error));
       return false;
     }
   }
@@ -54,7 +55,7 @@ export class CoreEngine {
         await this.streamStateUpdates();
         this.retryCount = 0; // Reset retry count on successful interaction
       } catch (error) {
-        console.error('RPC Listener connection error:', error);
+        console.error('RPC Listener connection error:', mapStellarError(error));
         
         if (this.retryCount >= this.MAX_RETRIES) {
           console.error('Max reconnection retries reached. Stopping listener.');

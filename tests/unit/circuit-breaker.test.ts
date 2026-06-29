@@ -1,9 +1,22 @@
-﻿import { CircuitBreaker, CircuitState } from '../src/circuit';
+﻿import { CircuitBreaker, CircuitBreakerError, CircuitState } from '../../src/circuit';
+import { PaymentSDKError } from '../../src/errors';
 
 describe('CircuitBreaker', () => {
   it('should start in CLOSED state', () => {
     const cb = new CircuitBreaker();
     expect(cb.currentState).toBe(CircuitState.CLOSED);
+  });
+
+  it('CircuitBreakerError extends the shared PaymentSDKError hierarchy', async () => {
+    const cb = new CircuitBreaker({ failureThreshold: 1, resetTimeoutMs: 60_000 });
+    try { await cb.execute(() => Promise.reject(new Error('fail'))); } catch {}
+
+    await expect(cb.execute(() => Promise.resolve('ok'))).rejects.toBeInstanceOf(
+      CircuitBreakerError,
+    );
+    await expect(cb.execute(() => Promise.resolve('ok'))).rejects.toBeInstanceOf(
+      PaymentSDKError,
+    );
   });
 
   it('should execute successfully and stay CLOSED', async () => {

@@ -1,4 +1,6 @@
-﻿/**
+﻿import { ErrorCode, PaymentSDKError } from '../errors/base';
+
+/**
  * Circuit breaker states.
  */
 export enum CircuitState {
@@ -86,12 +88,11 @@ export class CircuitBreaker {
   }
 }
 
-export class CircuitBreakerError extends Error {
+export class CircuitBreakerError extends PaymentSDKError {
   constructor(
     message: string,
     public state: CircuitState
   ) {
-    super(message);
-    this.name = 'CircuitBreakerError';
+    super(message, ErrorCode.CIRCUIT_OPEN);
   }
 }
