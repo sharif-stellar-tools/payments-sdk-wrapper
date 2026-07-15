@@ -20,3 +20,6 @@ export interface BatchPaymentResponse {
   transactionHash: string;
   operationCount: number;
 }
+
+export * as PlatformTypes from './generated/platform';
+export * as CallbackTypes from './generated/callbacks';

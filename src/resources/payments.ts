@@ -49,34 +49,33 @@ export class PaymentsResource {
         ? Asset.native()
         : new Asset(payload.currency, payload.issuer ?? sourcePublicKey);
 
-    let operation: Operation;
+    let operation: any;
 
     if (payload.strictSend) {
-      // PathPaymentStrictSend: specify exact destination amount
+      // PathPaymentStrictSend: specify exact send amount
       operation = Operation.pathPaymentStrictSend({
         sendAsset: asset,
         sendAmount: payload.amount.toString(),
         destination: payload.destination,
         destAsset: Asset.native(),
         destMin: payload.amount.toString(),
-      }) as unknown as Operation;
+      }) as any;
     } else if (payload.strictReceive) {
-      // PathPaymentStrictReceive: specify exact source amount
+      // PathPaymentStrictReceive: specify exact dest amount
       operation = Operation.pathPaymentStrictReceive({
         sendAsset: asset,
-        sendAmount: payload.amount.toString(),
+        sendMax: (payload.amount * 1.1).toString(),
         destination: payload.destination,
         destAsset: Asset.native(),
-        destMin: payload.amount.toString(),
-        sendMax: (payload.amount * 1.1).toString(),
-      }) as unknown as Operation;
+        destAmount: payload.amount.toString(),
+      }) as any;
     } else {
       // Standard payment
       operation = Operation.payment({
         destination: payload.destination,
         asset,
         amount: payload.amount.toString(),
-      });
+      }) as any;
     }
 
     const transaction = new TransactionBuilder(account, {
