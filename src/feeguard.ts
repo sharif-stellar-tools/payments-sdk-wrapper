@@ -1,7 +1,12 @@
 import { Transaction } from '@stellar/stellar-sdk';
+import { createSdkLogger, SdkLogger, SupportedLogger } from './logger';
 
 export class FeeGuardEngine {
-  constructor(private maxFeeStroops: number, private logger?: any) {}
+  public logger: SdkLogger;
+
+  constructor(private maxFeeStroops: number, logger?: SupportedLogger) {
+    this.logger = createSdkLogger(logger, 'FeeGuard');
+  }
 
   /**
    * Validates if the transaction fee is within the allowed limits.
@@ -13,9 +18,10 @@ export class FeeGuardEngine {
       throw new Error('Invalid transaction fee');
     }
 
-    if (this.logger && typeof this.logger.info === 'function') {
-      this.logger.info(`FeeGuard: Checking tx fee. Tx fee: ${fee} stroops. Max fee: ${this.maxFeeStroops} stroops.`);
-    }
+    this.logger.info(`Checking tx fee. Tx fee: ${fee} stroops. Max fee: ${this.maxFeeStroops} stroops.`, {
+      fee,
+      maxFeeStroops: this.maxFeeStroops,
+    });
 
     if (fee > this.maxFeeStroops) {
       throw new Error(

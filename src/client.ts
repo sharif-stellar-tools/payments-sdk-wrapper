@@ -3,25 +3,29 @@ import { PaymentClientOptions, PaymentStreamOptions } from './types';
 import { FeeGuardEngine } from './feeguard';
 import { Sep38Client } from './sep38';
 import { PaymentStream } from './stream';
+import { createSdkLogger, SdkLogger } from './logger';
 
 export class PaymentClient {
   public server: Horizon.Server;
+
   public feeGuard: FeeGuardEngine;
   public sep38: Sep38Client;
   private options: PaymentClientOptions;
+  public logger: SdkLogger;
 
   constructor(options: PaymentClientOptions & { anchorUrl?: string }) {
     this.options = options;
+    this.logger = createSdkLogger(options.logger, 'PaymentClient');
     this.server = new Horizon.Server(options.horizonUrl);
-    this.feeGuard = new FeeGuardEngine(options.maxFeeStroops, options.logger);
-    this.sep38 = new Sep38Client(options.anchorUrl || 'https://anchor.stellar.org', options.logger);
+    this.feeGuard = new FeeGuardEngine(options.maxFeeStroops, this.logger);
+    this.sep38 = new Sep38Client(options.anchorUrl || 'https://anchor.stellar.org', this.logger);
   }
 
   /**
    * Creates a new PaymentStream for real-time SSE payment events.
    */
   public createStream(options: PaymentStreamOptions): PaymentStream {
-    return new PaymentStream(this.server, options, this.options.logger);
+    return new PaymentStream(this.server, options, this.logger);
   }
 
   /**
@@ -34,15 +38,14 @@ export class PaymentClient {
     // 2. Submit transaction
     try {
       const response = await this.server.submitTransaction(transaction);
-      if (this.options.logger && typeof this.options.logger.info === 'function') {
-        this.options.logger.info(`PaymentClient: Transaction submitted successfully. Hash: ${response.hash}`);
-      }
+      this.logger.info(`Transaction submitted successfully. Hash: ${response.hash}`, { hash: response.hash });
       return response;
     } catch (error: any) {
-      if (this.options.logger && typeof this.options.logger.error === 'function') {
-        this.options.logger.error(`PaymentClient: Transaction submission failed: ${error.message}`);
-      }
+      this.logger.error(`Transaction submission failed: ${error.message}`, { error });
       throw error;
     }
   }
 }
+
+export type OpenPaymentsClient = PaymentClient;
+

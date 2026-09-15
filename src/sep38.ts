@@ -1,8 +1,13 @@
 import axios from 'axios';
 import { Sep38QuoteRequest, Sep38QuoteResponse } from './types';
+import { createSdkLogger, SdkLogger, SupportedLogger } from './logger';
 
 export class Sep38Client {
-  constructor(private anchorUrl: string, private logger?: any) {}
+  public logger: SdkLogger;
+
+  constructor(private anchorUrl: string, logger?: SupportedLogger) {
+    this.logger = createSdkLogger(logger, 'SEP-38');
+  }
 
   /**
    * Request a fiat on-ramp/off-ramp quote from the SEP-38 anchor server.
@@ -10,9 +15,12 @@ export class Sep38Client {
   public async getQuote(params: Sep38QuoteRequest, authToken?: string): Promise<Sep38QuoteResponse> {
     const url = `${this.anchorUrl}/quote`;
     
-    if (this.logger && typeof this.logger.info === 'function') {
-      this.logger.info(`SEP-38: Requesting quote for ${params.sellAmount} ${params.sellAsset} -> ${params.buyAsset}`);
-    }
+    this.logger.info(`Requesting quote for ${params.sellAmount} ${params.sellAsset} -> ${params.buyAsset}`, {
+      sellAsset: params.sellAsset,
+      buyAsset: params.buyAsset,
+      sellAmount: params.sellAmount,
+      context: params.context,
+    });
 
     try {
       const headers: Record<string, string> = {
@@ -36,9 +44,7 @@ export class Sep38Client {
 
       return response.data;
     } catch (error: any) {
-      if (this.logger && typeof this.logger.error === 'function') {
-        this.logger.error(`SEP-38: Failed to get quote: ${error.message}`);
-      }
+      this.logger.error(`Failed to get quote: ${error.message}`, { error });
       throw new Error(`SEP-38 Request Failed: ${error.response?.data?.error || error.message}`);
     }
   }
