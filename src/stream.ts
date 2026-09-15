@@ -1,16 +1,19 @@
 import { EventEmitter } from 'events';
 import { Horizon } from '@stellar/stellar-sdk';
 import { PaymentStreamOptions, PaymentEvent } from './types';
+import { createSdkLogger, SdkLogger, SupportedLogger } from './logger';
 
 export class PaymentStream extends EventEmitter {
   private closeFn?: () => void;
+  public logger: SdkLogger;
 
   constructor(
     private server: Horizon.Server,
     private options: PaymentStreamOptions,
-    private logger?: any
+    logger?: SupportedLogger
   ) {
     super();
+    this.logger = createSdkLogger(logger, 'PaymentStream');
   }
 
   /**
@@ -18,15 +21,14 @@ export class PaymentStream extends EventEmitter {
    */
   public connect(): void {
     if (this.closeFn) {
-      if (this.logger && typeof this.logger.warn === 'function') {
-        this.logger.warn('PaymentStream is already connected.');
-      }
+      this.logger.warn('PaymentStream is already connected.');
       return;
     }
 
-    if (this.logger && typeof this.logger.info === 'function') {
-      this.logger.info(`PaymentStream: Connecting to payments stream for account: ${this.options.account}`);
-    }
+    this.logger.info(`Connecting to payments stream for account: ${this.options.account}`, {
+      account: this.options.account,
+      cursor: this.options.cursor || 'now',
+    });
 
     try {
       this.closeFn = this.server.payments()
@@ -50,9 +52,7 @@ export class PaymentStream extends EventEmitter {
             }
           },
           onerror: (error: any) => {
-            if (this.logger && typeof this.logger.error === 'function') {
-              this.logger.error(`PaymentStream Error: ${error.message || JSON.stringify(error)}`);
-            }
+            this.logger.error(`PaymentStream Error: ${error.message || JSON.stringify(error)}`, { error });
             this.emit('payment.failed', error);
           }
         });
@@ -68,9 +68,7 @@ export class PaymentStream extends EventEmitter {
     if (this.closeFn) {
       this.closeFn();
       this.closeFn = undefined;
-      if (this.logger && typeof this.logger.info === 'function') {
-        this.logger.info('PaymentStream: Disconnected');
-      }
+      this.logger.info('PaymentStream: Disconnected');
     }
   }
 }

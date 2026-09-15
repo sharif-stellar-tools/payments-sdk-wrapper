@@ -1,8 +1,10 @@
+import { SupportedLogger } from '../logger';
+
 export interface PaymentClientOptions {
   network: 'mainnet' | 'testnet';
   horizonUrl: string;
   maxFeeStroops: number;
-  logger?: any;
+  logger?: SupportedLogger;
 }
 
 export interface PaymentStreamOptions {
@@ -35,3 +37,16 @@ export interface PaymentEvent {
   asset_type: string;
   created_at: string;
 }
+
+export interface PaymentRequest {
+  destination: string;
+  amount: string;
+  assetCode?: string;
+  memo?: string;
+}
+
+export interface PaymentResponse {
+  id: string;
+  status: string;
+}
+
