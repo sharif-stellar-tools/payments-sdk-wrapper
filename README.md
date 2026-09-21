@@ -158,6 +158,12 @@ npm run generate:types
 
 ---
 
+## 📚 Documentation & Guides
+
+- [Anchor Integration End-to-End Guide](docs/anchor-integration-guide.md) — Comprehensive tutorial covering SEP-38 quotes, on-ramp deposits, off-ramp withdrawals, and fee guardrails.
+
+---
+
 ## 🛣️ Roadmap & Active Issues
 
 - [[Feature] Add streaming support for real-time payment status updates via SSE](https://github.com/sharif-stellar-tools/payments-sdk-wrapper/issues/1)
