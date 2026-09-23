@@ -4,7 +4,36 @@ import { PaymentClient } from '../src/client';
 import { Transaction } from '@stellar/stellar-sdk';
 import axios from 'axios';
 
-jest.mock('axios');
+jest.mock('axios', () => {
+  const actualAxios = jest.requireActual('axios');
+  return {
+    __esModule: true,
+    ...actualAxios,
+    default: {
+      ...actualAxios.default,
+      post: jest.fn(),
+      create: jest.fn(() => ({
+        interceptors: {
+          request: { use: jest.fn(), eject: jest.fn() },
+          response: { use: jest.fn(), eject: jest.fn() },
+        },
+        defaults: { headers: { common: {} } },
+        get: jest.fn(),
+        post: jest.fn(),
+      })),
+    },
+    post: jest.fn(),
+    create: jest.fn(() => ({
+      interceptors: {
+        request: { use: jest.fn(), eject: jest.fn() },
+        response: { use: jest.fn(), eject: jest.fn() },
+      },
+      defaults: { headers: { common: {} } },
+      get: jest.fn(),
+      post: jest.fn(),
+    })),
+  };
+});
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('FeeGuardEngine', () => {
