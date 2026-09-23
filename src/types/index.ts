@@ -35,3 +35,17 @@ export interface PaymentEvent {
   asset_type: string;
   created_at: string;
 }
+
+export interface PaymentRequest {
+  id?: string;
+  amount?: string;
+  destination?: string;
+  [key: string]: any;
+}
+
+export interface PaymentResponse {
+  id: string;
+  status: string;
+  [key: string]: any;
+}
+
