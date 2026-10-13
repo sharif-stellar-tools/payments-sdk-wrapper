@@ -1,8 +1,21 @@
-import axios from 'axios';
-import { Sep38QuoteRequest, Sep38QuoteResponse } from './types';
+import axios, { AxiosRequestConfig } from 'axios';
+import * as zlib from 'zlib';
+import { Sep38QuoteRequest, Sep38QuoteResponse, Sep38ClientOptions } from './types';
 
 export class Sep38Client {
-  constructor(private anchorUrl: string, private logger?: any) {}
+  private enableGzip: boolean;
+  private gzipThresholdBytes: number;
+  private customHeaders: Record<string, string>;
+
+  constructor(
+    private anchorUrl: string,
+    private logger?: any,
+    options?: Sep38ClientOptions
+  ) {
+    this.enableGzip = options?.enableGzip ?? true;
+    this.gzipThresholdBytes = options?.gzipThresholdBytes ?? 1024;
+    this.customHeaders = options?.headers ?? {};
+  }
 
   /**
    * Request a fiat on-ramp/off-ramp quote from the SEP-38 anchor server.
@@ -17,21 +30,44 @@ export class Sep38Client {
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        ...this.customHeaders,
       };
+
+      if (this.enableGzip) {
+        headers['Accept-Encoding'] = 'gzip, deflate, br';
+      }
       
       if (authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
+      const bodyData = {
+        sell_asset: params.sellAsset,
+        buy_asset: params.buyAsset,
+        sell_amount: params.sellAmount,
+        context: params.context,
+      };
+
+      const jsonString = JSON.stringify(bodyData);
+      let requestData: string | Buffer = jsonString;
+
+      if (this.enableGzip && Buffer.byteLength(jsonString, 'utf8') >= this.gzipThresholdBytes) {
+        requestData = zlib.gzipSync(Buffer.from(jsonString, 'utf8'));
+        headers['Content-Encoding'] = 'gzip';
+        if (this.logger && typeof this.logger.debug === 'function') {
+          this.logger.debug(`SEP-38: Compressed outbound payload with gzip (${Buffer.byteLength(jsonString)} -> ${requestData.length} bytes)`);
+        }
+      }
+
+      const config: AxiosRequestConfig = {
+        headers,
+        decompress: true,
+      };
+
       const response = await axios.post<Sep38QuoteResponse>(
         url,
-        {
-          sell_asset: params.sellAsset,
-          buy_asset: params.buyAsset,
-          sell_amount: params.sellAmount,
-          context: params.context,
-        },
-        { headers }
+        requestData,
+        config
       );
 
       return response.data;
