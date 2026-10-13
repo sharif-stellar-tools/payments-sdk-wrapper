@@ -25,6 +25,12 @@ export interface Sep38QuoteResponse {
   buy_amount: string;
 }
 
+export interface Sep38ClientOptions {
+  enableGzip?: boolean;
+  gzipThresholdBytes?: number;
+  headers?: Record<string, string>;
+}
+
 export interface PaymentEvent {
   id: string;
   from: string;
