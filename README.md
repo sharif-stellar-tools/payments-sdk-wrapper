@@ -156,6 +156,10 @@ npm run build
 npm run generate:types
 ```
 
+## 📚 Documentation & Integration Guides
+
+- [Anchor Integration Developer Guide](./docs/ANCHOR_INTEGRATION_GUIDE.md): End-to-end tutorial detailing SEP-10 authentication, SEP-38 compressed quotations, deposit/withdrawal lifecycles, and real-time SSE payment monitoring.
+
 ---
 
 ## 🛣️ Roadmap & Active Issues
