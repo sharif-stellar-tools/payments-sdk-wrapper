@@ -83,4 +83,38 @@ describe('PaymentClient', () => {
     expect(client.feeGuard).toBeDefined();
     expect(client.sep38).toBeDefined();
   });
+
+  it('should build a multi-asset payment transaction with multiple operations', async () => {
+    const { Account, Asset, Memo } = require('@stellar/stellar-sdk');
+    const client = new PaymentClient({
+      network: 'testnet',
+      horizonUrl: 'https://horizon-testnet.stellar.org',
+      maxFeeStroops: 1000,
+    });
+
+    const mockAccount = new Account('GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H', '1000');
+    jest.spyOn(client.server, 'loadAccount').mockResolvedValue(mockAccount as any);
+
+    const tx = await client.buildMultiAssetPaymentTransaction({
+      sourceAccount: 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H',
+      payments: [
+        {
+          destination: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN',
+          asset: Asset.native(),
+          amount: '10.5',
+        },
+        {
+          destination: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN',
+          asset: new Asset('USDC', 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5'),
+          amount: '25.0',
+        },
+      ],
+      baseFee: 200,
+      memo: Memo.text('MultiAsset'),
+    });
+
+    expect(tx).toBeDefined();
+    expect(tx.operations.length).toBe(2);
+    expect(tx.fee).toBe('200');
+  });
 });

@@ -1,5 +1,5 @@
-import { Horizon, Transaction } from '@stellar/stellar-sdk';
-import { PaymentClientOptions, PaymentStreamOptions } from './types';
+import { Horizon, Transaction, TransactionBuilder, Operation, Networks } from '@stellar/stellar-sdk';
+import { PaymentClientOptions, PaymentStreamOptions, MultiAssetPaymentOptions } from './types';
 import { FeeGuardEngine } from './feeguard';
 import { Sep38Client } from './sep38';
 import { PaymentStream } from './stream';
@@ -22,6 +22,40 @@ export class PaymentClient {
    */
   public createStream(options: PaymentStreamOptions): PaymentStream {
     return new PaymentStream(this.server, options, this.options.logger);
+  }
+
+  /**
+   * Builds an atomic transaction envelope bundling multiple payment operations across different assets.
+   */
+  public async buildMultiAssetPaymentTransaction(
+    options: MultiAssetPaymentOptions
+  ): Promise<Transaction> {
+    const account = await this.server.loadAccount(options.sourceAccount);
+    const fee = options.baseFee || 100;
+    const networkPassphrase =
+      this.options.network === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET;
+
+    const txBuilder = new TransactionBuilder(account, {
+      fee: fee.toString(),
+      networkPassphrase,
+    });
+
+    if (options.memo) {
+      txBuilder.addMemo(options.memo);
+    }
+
+    for (const payment of options.payments) {
+      txBuilder.addOperation(
+        Operation.payment({
+          destination: payment.destination,
+          asset: payment.asset,
+          amount: payment.amount,
+        })
+      );
+    }
+
+    txBuilder.setTimeout(30);
+    return txBuilder.build();
   }
 
   /**

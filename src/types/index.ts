@@ -1,3 +1,5 @@
+import { Asset, Memo } from '@stellar/stellar-sdk';
+
 export interface PaymentClientOptions {
   network: 'mainnet' | 'testnet';
   horizonUrl: string;
@@ -34,4 +36,17 @@ export interface PaymentEvent {
   asset_issuer?: string;
   asset_type: string;
   created_at: string;
+}
+
+export interface MultiAssetPaymentItem {
+  destination: string;
+  asset: Asset;
+  amount: string;
+}
+
+export interface MultiAssetPaymentOptions {
+  sourceAccount: string;
+  payments: MultiAssetPaymentItem[];
+  baseFee?: number;
+  memo?: Memo;
 }
